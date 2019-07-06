@@ -170,12 +170,9 @@ public final class ReflectionUtil {
             Type superType = targetClass.getGenericSuperclass();
             if (superType instanceof ParameterizedType) {
                 if (((ParameterizedType) superType).getRawType().equals(superClass)) {
+                    // FIXME: better version of these methods in #3535, use it instead.
                     Type boundType = ((ParameterizedType) superType).getActualTypeArguments()[index];
-                    if (boundType instanceof Class) {
-                        return (Class<?>) boundType;
-                    } else {
-                        return null;
-                    }
+                    return getClassOfType(boundType);
                 }
             }
         }
