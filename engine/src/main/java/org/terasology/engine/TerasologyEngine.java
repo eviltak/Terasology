@@ -52,10 +52,11 @@ import org.terasology.i18n.I18nSubsystem;
 import org.terasology.input.InputSystem;
 import org.terasology.logic.behavior.asset.BehaviorTree;
 import org.terasology.logic.behavior.asset.BehaviorTreeData;
+import org.terasology.module.ModuleEnvironment;
 import org.terasology.monitoring.Activity;
 import org.terasology.monitoring.PerformanceMonitor;
 import org.terasology.network.NetworkSystem;
-import org.terasology.persistence.typeHandling.TypeSerializationLibrary;
+import org.terasology.persistence.typeHandling.TypeHandlerLibrary;
 import org.terasology.recording.CharacterStateEventPositionMap;
 import org.terasology.recording.DirectionAndOriginPosRecorderList;
 import org.terasology.recording.RecordAndReplayCurrentStatus;
@@ -315,8 +316,9 @@ public class TerasologyEngine implements GameEngine {
 
         CopyStrategyLibrary copyStrategyLibrary = new CopyStrategyLibrary(reflectFactory);
         rootContext.put(CopyStrategyLibrary.class, copyStrategyLibrary);
-        rootContext.put(TypeSerializationLibrary.class, new TypeSerializationLibrary(reflectFactory,
-                copyStrategyLibrary));
+
+        ModuleEnvironment environment = moduleManager.getEnvironment();
+        rootContext.put(TypeHandlerLibrary.class, TypeHandlerLibrary.forModuleEnvironment(environment));
 
         changeStatus(TerasologyEngineStatus.INITIALIZING_ASSET_TYPES);
         assetTypeManager = new ModuleAwareAssetTypeManager();
