@@ -27,6 +27,7 @@ import org.terasology.config.flexible.FlexibleConfig;
 import org.terasology.config.flexible.Setting;
 import org.terasology.config.flexible.constraints.SettingConstraint;
 import org.terasology.engine.SimpleUri;
+import org.terasology.reflection.TypeInfo;
 
 import java.io.Reader;
 import java.io.Writer;
@@ -42,7 +43,7 @@ class FlexibleConfigImpl implements FlexibleConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String DESCRIPTION_PROPERTY_NAME = "description";
 
-    private final Map<SimpleUri, Setting> settings = Maps.newHashMap();
+    private final Map<SimpleUri, Setting<?>> settings = Maps.newHashMap();
     private final Map<SimpleUri, String> temporarilyParkedSettings = Maps.newHashMap();
 
     private final String description;
@@ -55,8 +56,8 @@ class FlexibleConfigImpl implements FlexibleConfig {
      * {@inheritDoc}
      */
     @Override
-    public <V> SettingEntry<V> newSetting(SimpleUri id, Class<V> valueType) {
-        return new SettingImplEntry<>(id);
+    public <V> SettingEntry<V> newSetting(SimpleUri id, TypeInfo<V> valueType) {
+        return new SettingImplEntry<>(id, valueType);
     }
 
     /**
@@ -83,19 +84,19 @@ class FlexibleConfigImpl implements FlexibleConfig {
      */
     @Override
     @SuppressWarnings("unchecked")
-    public <V> Setting<V> get(SimpleUri id, Class<V> valueType) {
-        Setting setting = settings.get(id);
+    public <V> Setting<V> get(SimpleUri id, TypeInfo<V> valueType) {
+        Setting<?> setting = settings.get(id);
 
         if (setting == null) {
             return null;
         }
 
-        Class settingValueClass = setting.getValueClass();
+        TypeInfo<?> settingValueClass = setting.getValueType();
 
         if (!settingValueClass.equals(valueType)) {
             throw new ClassCastException(
-                    "For id '" + id + "' expected a Setting of type " + valueType.getName() +
-                    ", found a Setting of type " + settingValueClass.getName()
+                "For id '" + id + "' expected a Setting of type " + valueType.toString() +
+                    ", found a Setting of type " + settingValueClass.toString()
             );
         }
 
@@ -126,8 +127,8 @@ class FlexibleConfigImpl implements FlexibleConfig {
 
         jsonObject.addProperty(DESCRIPTION_PROPERTY_NAME, description);
 
-        for (Map.Entry<SimpleUri, Setting> entry : settings.entrySet()) {
-            Setting setting = entry.getValue();
+        for (Map.Entry<SimpleUri, Setting<?>> entry : settings.entrySet()) {
+            Setting<?> setting = entry.getValue();
             if (!setting.getValue().equals(setting.getDefaultValue())) {
                 jsonObject.add(entry.getKey().toString(), setting.getValueAsJson());
             }
@@ -173,9 +174,11 @@ class FlexibleConfigImpl implements FlexibleConfig {
         private SettingConstraint<T> constraint;
         private String humanReadableName = "";
         private String description = "";
+        private TypeInfo<T> valueType;
 
-        private SettingImplEntry(SimpleUri id) {
+        private SettingImplEntry(SimpleUri id, TypeInfo<T> typeInfo) {
             this.id = id;
+            valueType = typeInfo;
         }
 
         @Override
@@ -209,7 +212,7 @@ class FlexibleConfigImpl implements FlexibleConfig {
         @Override
         public boolean addToConfig() {
             SettingImpl<T> setting = new SettingImpl<>(
-                    id, defaultValue, constraint, humanReadableName, description
+                id, valueType, defaultValue, constraint, humanReadableName, description
             );
 
             if (id == null) {

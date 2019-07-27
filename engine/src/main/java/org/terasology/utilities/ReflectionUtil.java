@@ -45,10 +45,6 @@ public final class ReflectionUtil {
     private ReflectionUtil() {
     }
 
-    private static boolean equal(Object a, Object b) {
-        return a == b || (a != null && a.equals(b));
-    }
-
     /**
      * Returns true if {@link Type} {@code a} and {@code b} are equal.
      */
@@ -66,10 +62,9 @@ public final class ReflectionUtil {
                 return false;
             }
 
-            // TODO: save a .clone() call
             ParameterizedType pa = (ParameterizedType) a;
             ParameterizedType pb = (ParameterizedType) b;
-            return equal(pa.getOwnerType(), pb.getOwnerType())
+            return Objects.equals(pa.getOwnerType(), pb.getOwnerType())
                     && pa.getRawType().equals(pb.getRawType())
                     && Arrays.equals(pa.getActualTypeArguments(), pb.getActualTypeArguments());
 

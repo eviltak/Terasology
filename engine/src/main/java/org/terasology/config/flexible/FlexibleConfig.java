@@ -18,6 +18,7 @@ package org.terasology.config.flexible;
 import org.terasology.config.flexible.constraints.SettingConstraint;
 import org.terasology.engine.SimpleUri;
 import org.terasology.module.sandbox.API;
+import org.terasology.reflection.TypeInfo;
 
 import java.io.Reader;
 import java.io.Writer;
@@ -38,26 +39,60 @@ public interface FlexibleConfig {
      * @return The {@link SettingEntry} object that can construct a {@link Setting} and
      * then add it to this {@link FlexibleConfig}.
      */
-    <V> SettingEntry<V> newSetting(SimpleUri id, Class<V> valueType);
+    <V> SettingEntry<V> newSetting(SimpleUri id, TypeInfo<V> valueType);
 
     /**
-     * Returns the {@link Setting<V>} with the given id. Null is returned if a setting with the given id does not
-     * exist in the config.
+     * Registers the addition of a new {@link Setting} to this {@link FlexibleConfig}
+     * through a {@link SettingEntry}, which allows you to construct the new
+     * {@link Setting} and add it to this {@link FlexibleConfig} once it is constructed.
      *
-     * @param <V> The type of the value the retrieved {@link Setting} must contain.
-     * @param id  The id of the {@link Setting} to retrieve.
-     * @param valueType The {@link Class} of the type of the value the retrieved {@link Setting} must contain.
-     * @return The {@link Setting<V>}, if found in the config. Null if a {@link Setting} with the given id
-     * does not exist in the config.
-     * @throws ClassCastException when {@link V} does not match the type of the values stored inside the retrieved
-     *                            {@link Setting}.
+     * @param id        The id of the {@link Setting} that will be added.
+     * @param valueType The type of values that the {@link Setting} will store.
+     * @return The {@link SettingEntry} object that can construct a {@link Setting} and
+     * then add it to this {@link FlexibleConfig}.
+     * @see #newSetting(SimpleUri, TypeInfo)
      */
-    <V> Setting<V> get(SimpleUri id, Class<V> valueType);
+    default <V> SettingEntry<V> newSetting(SimpleUri id, Class<V> valueType) {
+        return newSetting(id, TypeInfo.of(valueType));
+    }
 
     /**
-     * Removes the {@link Setting} with the given id if it exists in the config and if the {@link Setting} does
-     * not have any subscribers. In case of failure warnings will be issued through the logger detailing the
-     * exact nature of the failure.
+     * Returns the {@link Setting<V>} with the given id. Null is returned if a setting
+     * with the given id does not exist in the config.
+     *
+     * @param <V>       The type of the value the retrieved {@link Setting} must contain.
+     * @param id        The id of the {@link Setting} to retrieve.
+     * @param valueType The {@link TypeInfo} of the type of the value the retrieved
+     *                  {@link Setting} must contain.
+     * @return The {@link Setting<V>}, if found in the config. Null if a {@link Setting}
+     * with the given id does not exist in the config.
+     * @throws ClassCastException when {@link V} does not match the type of the values
+     *                            stored inside the retrieved {@link Setting}.
+     */
+    <V> Setting<V> get(SimpleUri id, TypeInfo<V> valueType);
+
+    /**
+     * Returns the {@link Setting<V>} with the given id. Null is returned if a setting
+     * with the given id does not exist in the config.
+     *
+     * @see #get(SimpleUri, TypeInfo)
+     *
+     * @param id        The id of the {@link Setting} to retrieve.
+     * @param valueType The {@link Class} of the type of the value the retrieved
+     *                  {@link Setting} must contain.
+     * @return The {@link Setting<V>}, if found in the config. Null if a {@link Setting}
+     * with the given id does not exist in the config.
+     * @throws ClassCastException when {@link V} does not match the type of the values
+     *                            stored inside the retrieved {@link Setting}.
+     */
+    default <V> Setting<V> get(SimpleUri id, Class<V> valueType) {
+        return get(id, TypeInfo.of(valueType));
+    }
+
+    /**
+     * Removes the {@link Setting} with the given id if it exists in the config and if
+     * the {@link Setting} does not have any subscribers. In case of failure warnings
+     * will be issued through the logger detailing the exact nature of the failure.
      *
      * @param id The id of the {@link Setting} to remove.
      * @return True if the {@link Setting} was removed, false otherwise.
@@ -79,25 +114,27 @@ public interface FlexibleConfig {
     Collection<Setting> getSettings();
 
     /**
-     * Returns a potentially verbose, human-readable description regarding the purpose of this {@link FlexibleConfig}.
-     * This description is also written to file when the {@link FlexibleConfig} is saved.
+     * Returns a potentially verbose, human-readable description regarding the purpose of
+     * this {@link FlexibleConfig}. This description is also written to file when the
+     * {@link FlexibleConfig} is saved.
      */
     String getDescription();
 
     /**
-     * Saves the values of all settings having non-default values, to enable persistence across sessions.
-     * Also saved for documentation purposes is the description of the {@link FlexibleConfig}, as
-     * determined by {@link #getDescription()}.
+     * Saves the values of all settings having non-default values, to enable persistence
+     * across sessions. Also saved for documentation purposes is the description of
+     * the {@link FlexibleConfig}, as determined by {@link #getDescription()}.
      * <p>
-     * All the non-default values that were not used in this session and are still "parked" are also
-     * saved as-is, to be used later.
+     * All the non-default values that were not used in this session and are still "parked"
+     * are also saved as-is, to be used later.
      *
      * @param writer A writer that will serve as the destination of settings.
      */
     void save(Writer writer);
 
     /**
-     * Loads the values of the settings having non-default values, to enable persistence across sessions.
+     * Loads the values of the settings having non-default values, to enable persistence
+     * across sessions.
      * <p>
      * All the non-default values are loaded and "parked", initially remaining inaccessible.
      * Once a Setting object is added to the config, a corresponding non-default value is sought

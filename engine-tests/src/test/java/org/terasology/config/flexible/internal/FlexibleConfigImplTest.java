@@ -15,6 +15,7 @@
  */
 package org.terasology.config.flexible.internal;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
@@ -24,11 +25,13 @@ import org.terasology.config.flexible.Setting;
 import org.terasology.config.flexible.constraints.NumberRangeConstraint;
 import org.terasology.config.flexible.constraints.SettingConstraint;
 import org.terasology.engine.SimpleUri;
+import org.terasology.reflection.TypeInfo;
 
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -50,8 +53,8 @@ public class FlexibleConfigImplTest {
             SimpleUri absentId = new SimpleUri("engine-tests:TestSetting2");
 
             config.newSetting(id, Integer.class)
-                    .setDefaultValue(0)
-                    .addToConfig();
+                .setDefaultValue(0)
+                .addToConfig();
 
             Setting<Integer> retrievedSetting = config.get(id, Integer.class);
             Setting<Double> absentSetting = config.get(absentId, Double.class);
@@ -64,11 +67,11 @@ public class FlexibleConfigImplTest {
         public void testGetInvalidType() {
             SimpleUri id = new SimpleUri("engine-tests:TestSetting");
 
-            config.newSetting(id, Integer.class)
-                    .setDefaultValue(0)
-                    .addToConfig();
+            config.newSetting(id, new TypeInfo<List<Integer>>() {})
+                .setDefaultValue(ImmutableList.of())
+                .addToConfig();
 
-            Setting<String> retrievedSetting = config.get(id, String.class);
+            Setting<List<String>> retrievedSetting = config.get(id, new TypeInfo<List<String>>() {});
         }
     }
 
@@ -85,8 +88,8 @@ public class FlexibleConfigImplTest {
             SimpleUri id = new SimpleUri("engine-tests:TestSetting");
 
             config.newSetting(id, Integer.class)
-                    .setDefaultValue(0)
-                    .addToConfig();
+                .setDefaultValue(0)
+                .addToConfig();
 
             assertTrue(config.contains(id));
         }
@@ -96,8 +99,8 @@ public class FlexibleConfigImplTest {
             SimpleUri id = new SimpleUri("engine-tests:TestSetting");
 
             config.newSetting(id, Integer.class)
-                    .setDefaultValue(0)
-                    .addToConfig();
+                .setDefaultValue(0)
+                .addToConfig();
 
             assertFalse(config.contains(KEY_NON_EXISTENT));
         }
@@ -117,17 +120,17 @@ public class FlexibleConfigImplTest {
             final Integer defaultValue = 5;
 
             final SettingConstraint<Integer> constraint =
-                    new NumberRangeConstraint<>(0, 10, true, true);
+                new NumberRangeConstraint<>(0, 10, true, true);
 
             final String name = "name";
             final String description = "description";
 
             assertTrue(config.newSetting(ID, Integer.class)
-                    .setDefaultValue(defaultValue)
-                    .setConstraint(constraint)
-                    .setHumanReadableName(name)
-                    .setDescription(description)
-                    .addToConfig());
+                           .setDefaultValue(defaultValue)
+                           .setConstraint(constraint)
+                           .setHumanReadableName(name)
+                           .setDescription(description)
+                           .addToConfig());
 
             Setting<Integer> setting = config.get(ID, Integer.class);
 
@@ -141,15 +144,15 @@ public class FlexibleConfigImplTest {
         @Test
         public void testAddExisting() throws Exception {
             assertTrue(config.newSetting(ID, Integer.class)
-                    .setDefaultValue(0)
-                    .addToConfig());
+                           .setDefaultValue(0)
+                           .addToConfig());
 
             FlexibleConfig.SettingEntry<Integer> entry = config.newSetting(ID, Integer.class);
 
             assertNotNull(entry);
 
             assertFalse(entry.setDefaultValue(0)
-                    .addToConfig());
+                            .addToConfig());
         }
     }
 
@@ -167,11 +170,11 @@ public class FlexibleConfigImplTest {
             SimpleUri id2 = new SimpleUri("engine-tests:TestSetting2");
 
             config.newSetting(id1, Integer.class)
-                    .setDefaultValue(0)
-                    .addToConfig();
+                .setDefaultValue(0)
+                .addToConfig();
             config.newSetting(id2, Integer.class)
-                    .setDefaultValue(0)
-                    .addToConfig();
+                .setDefaultValue(0)
+                .addToConfig();
 
             assertTrue(config.remove(id1));
             assertTrue(config.remove(id2));
@@ -182,8 +185,8 @@ public class FlexibleConfigImplTest {
             SimpleUri id = new SimpleUri("engine-tests:TestSetting");
 
             config.newSetting(id, Integer.class)
-                    .setDefaultValue(0)
-                    .addToConfig();
+                .setDefaultValue(0)
+                .addToConfig();
 
             assertFalse(config.remove(KEY_NON_EXISTENT));
         }
@@ -193,8 +196,8 @@ public class FlexibleConfigImplTest {
             SimpleUri id = new SimpleUri("engine-tests:TestSetting");
 
             config.newSetting(id, Integer.class)
-                    .setDefaultValue(0)
-                    .addToConfig();
+                .setDefaultValue(0)
+                .addToConfig();
 
             Setting setting = config.get(id, Integer.class);
 
@@ -207,15 +210,15 @@ public class FlexibleConfigImplTest {
 
     public static class JsonStorage {
         private static final String CONFIG_AS_JSON = "{\n" +
-                "  \"description\": \"\",\n" +
-                "  \"engine-tests:TestSetting3\": {\n" +
-                "    \"a\": 31,\n" +
-                "    \"b\": \"string\",\n" +
-                "    \"c\": \"A2\"\n" +
-                "  },\n" +
-                "  \"engine-tests:TestSetting1\": \"A3\",\n" +
-                "  \"engine-tests:TestSetting2\": 21.0\n" +
-                "}";
+                                                         "  \"description\": \"\",\n" +
+                                                         "  \"engine-tests:TestSetting3\": {\n" +
+                                                         "    \"a\": 31,\n" +
+                                                         "    \"b\": \"string\",\n" +
+                                                         "    \"c\": \"A2\"\n" +
+                                                         "  },\n" +
+                                                         "  \"engine-tests:TestSetting1\": \"A3\",\n" +
+                                                         "  \"engine-tests:TestSetting2\": 21.0\n" +
+                                                         "}";
 
 
         private static final TestEnum TESTENUM_SETTING_VALUE = TestEnum.A3;
@@ -232,24 +235,24 @@ public class FlexibleConfigImplTest {
             SimpleUri testEnumSettingId = new SimpleUri("engine-tests:TestSetting1");
 
             config.newSetting(testEnumSettingId, TestEnum.class)
-                    .setDefaultValue(TestEnum.A1)
-                    .addToConfig();
+                .setDefaultValue(TestEnum.A1)
+                .addToConfig();
 
             testEnumSetting = config.get(testEnumSettingId, TestEnum.class);
 
             SimpleUri doubleSettingId = new SimpleUri("engine-tests:TestSetting2");
 
             config.newSetting(doubleSettingId, Double.class)
-                    .setDefaultValue(30.0)
-                    .addToConfig();
+                .setDefaultValue(30.0)
+                .addToConfig();
 
             doubleSetting = config.get(doubleSettingId, Double.class);
 
             SimpleUri testClassSettingId = new SimpleUri("engine-tests:TestSetting3");
 
             config.newSetting(testClassSettingId, TestClass.class)
-                    .setDefaultValue(new TestClass(101))
-                    .addToConfig();
+                .setDefaultValue(new TestClass(101))
+                .addToConfig();
 
             testClassSetting = config.get(testClassSettingId, TestClass.class);
         }
