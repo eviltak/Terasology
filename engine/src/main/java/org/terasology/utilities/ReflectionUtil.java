@@ -65,8 +65,8 @@ public final class ReflectionUtil {
             ParameterizedType pa = (ParameterizedType) a;
             ParameterizedType pb = (ParameterizedType) b;
             return Objects.equals(pa.getOwnerType(), pb.getOwnerType())
-                    && pa.getRawType().equals(pb.getRawType())
-                    && Arrays.equals(pa.getActualTypeArguments(), pb.getActualTypeArguments());
+                       && pa.getRawType().equals(pb.getRawType())
+                       && Arrays.equals(pa.getActualTypeArguments(), pb.getActualTypeArguments());
 
         } else if (a instanceof GenericArrayType) {
             if (!(b instanceof GenericArrayType)) {
@@ -85,7 +85,7 @@ public final class ReflectionUtil {
             WildcardType wa = (WildcardType) a;
             WildcardType wb = (WildcardType) b;
             return Arrays.equals(wa.getUpperBounds(), wb.getUpperBounds())
-                    && Arrays.equals(wa.getLowerBounds(), wb.getLowerBounds());
+                       && Arrays.equals(wa.getLowerBounds(), wb.getLowerBounds());
 
         } else if (a instanceof TypeVariable) {
             if (!(b instanceof TypeVariable)) {
@@ -94,7 +94,7 @@ public final class ReflectionUtil {
             TypeVariable<?> va = (TypeVariable<?>) a;
             TypeVariable<?> vb = (TypeVariable<?>) b;
             return va.getGenericDeclaration() == vb.getGenericDeclaration()
-                    && va.getName().equals(vb.getName());
+                       && va.getName().equals(vb.getName());
 
         } else {
             // This isn't a type we support. Could be a generic array type, wildcard type, etc.
@@ -115,7 +115,7 @@ public final class ReflectionUtil {
             return null;
         }
         ParameterizedType parameterizedType = (ParameterizedType) type;
-        if (parameterizedType.getActualTypeArguments().length < index + 1) {
+        if (index >= parameterizedType.getActualTypeArguments().length) {
             return null;
         }
         return parameterizedType.getActualTypeArguments()[index];
@@ -237,7 +237,7 @@ public final class ReflectionUtil {
         for (Class targetClass = getRawType(target);
              !Object.class.equals(targetClass);
              target = resolveType(target, targetClass.getGenericSuperclass()),
-                     targetClass = getRawType(target)) {
+                 targetClass = getRawType(target)) {
             if (superClass.equals(targetClass)) {
                 return getTypeParameter(target, index);
             }
@@ -260,7 +260,11 @@ public final class ReflectionUtil {
         Type genericSuperclass = resolveType(target, targetClass.getGenericSuperclass());
 
         if (!Object.class.equals(genericSuperclass) && genericSuperclass != null) {
-            return getTypeParameterForSuperInterface(genericSuperclass, superClass, index);
+            Type fromSuperClass = getTypeParameterForSuperInterface(genericSuperclass, superClass, index);
+
+            if (fromSuperClass != null) {
+                return fromSuperClass;
+            }
         }
 
         for (Type genericInterface : targetClass.getGenericInterfaces()) {
@@ -421,7 +425,7 @@ public final class ReflectionUtil {
     }
 
     private static Stream<Map.Entry<Class<?>, Integer>> cascadeTypeVariableDeclarationToSupertypes(
-            int typeVariableIndex, Class<?> declaration) {
+        int typeVariableIndex, Class<?> declaration) {
         TypeVariable<?> typeVariable = declaration.getTypeParameters()[typeVariableIndex];
 
         return Stream.concat(
@@ -457,11 +461,11 @@ public final class ReflectionUtil {
                 // Try parent
             } catch (Exception e) {
                 throw new IllegalArgumentException(
-                        "Cannot access field " + cls.getName() + "." + fieldName, e);
+                    "Cannot access field " + cls.getName() + "." + fieldName, e);
             }
         }
         throw new IllegalArgumentException(
-                "Cannot find field " + cls.getName() + "." + fieldName);
+            "Cannot find field " + cls.getName() + "." + fieldName);
     }
 
     public static ParameterizedTypeImpl parameterizedTypeOf(Type ownerType, Type[] actualTypeArguments, Type rawType) {
@@ -484,9 +488,9 @@ public final class ReflectionUtil {
         }
 
         return parameterizedTypeOf(
-                parameterizeRawType(rawType.getEnclosingClass()),
-                typeParameters,
-                rawType
+            parameterizeRawType(rawType.getEnclosingClass()),
+            typeParameters,
+            rawType
         );
     }
 
@@ -640,8 +644,8 @@ public final class ReflectionUtil {
             }
 
             return Objects.equals(this.ownerType, otherParameterizedType.getOwnerType()) &&
-                    Objects.equals(this.rawType, otherParameterizedType.getRawType()) &&
-                    Arrays.equals(this.actualTypeArguments, otherParameterizedType.getActualTypeArguments());
+                       Objects.equals(this.rawType, otherParameterizedType.getRawType()) &&
+                       Arrays.equals(this.actualTypeArguments, otherParameterizedType.getActualTypeArguments());
         }
 
         public int hashCode() {
