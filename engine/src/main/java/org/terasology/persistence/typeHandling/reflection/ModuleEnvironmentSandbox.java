@@ -16,19 +16,17 @@
 package org.terasology.persistence.typeHandling.reflection;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import org.terasology.engine.SimpleUri;
 import org.terasology.module.ModuleEnvironment;
 import org.terasology.naming.Name;
 import org.terasology.persistence.typeHandling.TypeHandler;
 import org.terasology.reflection.TypeInfo;
+import org.terasology.utilities.ReflectionUtil;
 
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
-
-import static com.google.common.collect.Streams.stream;
 
 public class ModuleEnvironmentSandbox implements SerializationSandbox {
     private final ModuleEnvironment moduleEnvironment;
@@ -70,7 +68,7 @@ public class ModuleEnvironmentSandbox implements SerializationSandbox {
 
         Name providingModule = moduleEnvironment.getModuleProviding(subclass);
 
-
+        // TODO: Use ModuleContext if invalid uri
         if (subTypeUri.isValid()) {
             if (!subTypeUri.getModuleName().equals(providingModule)) {
                 return false;
@@ -82,10 +80,10 @@ public class ModuleEnvironmentSandbox implements SerializationSandbox {
 
     @Override
     public <T> String getSubTypeIdentifier(Class<? extends T> subType, Class<T> baseType) {
-        SimpleUri subTypeUri = getTypeSimpleUri(subType);
+        SimpleUri subTypeUri = ReflectionUtil.simpleUriOfType(subType, moduleEnvironment);
 
         long subTypesWithSameUri = Streams.stream(moduleEnvironment.getSubtypesOf(baseType))
-                                       .map(this::getTypeSimpleUri)
+                                       .map(type -> ReflectionUtil.simpleUriOfType(type, moduleEnvironment))
                                        .filter(subTypeUri::equals)
                                        .count();
 
@@ -123,10 +121,4 @@ public class ModuleEnvironmentSandbox implements SerializationSandbox {
         return Objects.equals(moduleDeclaringType, moduleDeclaringHandler);
     }
 
-    private SimpleUri getTypeSimpleUri(Class<?> type) {
-        Name moduleProvidingType = moduleEnvironment.getModuleProviding(type);
-        String typeSimpleName = type.getSimpleName();
-
-        return new SimpleUri(moduleProvidingType, typeSimpleName);
-    }
 }
