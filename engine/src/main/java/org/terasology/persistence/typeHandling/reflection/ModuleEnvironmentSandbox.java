@@ -80,10 +80,10 @@ public class ModuleEnvironmentSandbox implements SerializationSandbox {
 
     @Override
     public <T> String getSubTypeIdentifier(Class<? extends T> subType, Class<T> baseType) {
-        SimpleUri subTypeUri = ReflectionUtil.simpleUriOfType(subType, moduleEnvironment);
+        String subTypeUri = ReflectionUtil.getTypeUri(subType, moduleEnvironment);
 
         long subTypesWithSameUri = Streams.stream(moduleEnvironment.getSubtypesOf(baseType))
-                                       .map(type -> ReflectionUtil.simpleUriOfType(type, moduleEnvironment))
+                                       .map(type -> ReflectionUtil.getTypeUri(type, moduleEnvironment))
                                        .filter(subTypeUri::equals)
                                        .count();
 
